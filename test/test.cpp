@@ -1,5 +1,6 @@
 #include <iostream>
-#include "../depend/yaml-cpp/include/yaml.h"
+#include "yaml-cpp/yaml.h"
+#include "spdlog/spdlog.h"
 
 //后续增加 spdlog 会进行替换
 #define Cout   std::cout 
@@ -57,8 +58,22 @@ private:
 };
 
 
+class TestSpdlog{
+public:
+    void operator() () {
+        spdlog::info("welcome to spdlog");
+
+        spdlog::debug("error");
+
+
+    }
+
+};
+
+
 int main(int argc, char** argv)
 {
     TestYaml()();
+    TestSpdlog()();
     return 0;
 }
