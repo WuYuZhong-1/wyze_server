@@ -214,6 +214,8 @@ public:
         std::cout << "i = " << i << std::endl;
         double d = boost::lexical_cast<double>(std::string("12.3456789").c_str(), 4);
         std::cout << "d = " << d << std::endl;
+
+        std::string str = boost::lexical_cast<std::string>(100);
     }
 
 };

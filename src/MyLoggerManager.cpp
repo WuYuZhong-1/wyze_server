@@ -1,6 +1,7 @@
 #include "MyLoggerManager.h"
 #include <iostream>
 
+bool log_init = false;
 
 namespace wyze {
 
@@ -32,9 +33,11 @@ namespace wyze {
             //设置默认输出
             spdlog::set_default_logger(m_console);
 
+            //设置全局变量log_init 初始化，这时所有的 输出信息使用初始化后的 打印，否则使用初始化前的打印
+            log_init = true;
         }
         catch(const spdlog::spdlog_ex& ex) {
-            std::cout << "spdlog init error:" << ex.what() << std::endl;
+            _ERROR("spdlog init error:{}", ex.what());
         }
     }
 

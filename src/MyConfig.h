@@ -6,8 +6,19 @@
 #include <set>
 #include <iostream>
 #include <boost/lexical_cast.hpp>
+#include "MyLoggerManager.h"
+#include "yaml-cpp/yaml.h"
 
-namespace wuyze {
+
+#define CONFIG_UTIL_VAR1         "wuyze1"
+#define CONFIG_UTIL_VAR2         "wuyze2"
+#define CONFIG_UTIL_VAR3         "wuyze3"
+#define CONFIG_UTIL_VAR4         "wuyze4"
+
+
+
+
+namespace wyze {
     using namespace wyze;
     //配置文件变量类
     class MyConfigVarBase {
@@ -21,9 +32,6 @@ namespace wuyze {
             }
         };
 
-        //重载 == 
-
-        
         MyConfigVarBase(const std::string& name, const std::string& description)
             : m_name(name), m_description(description) { };
         virtual ~MyConfigVarBase() { }
@@ -33,7 +41,7 @@ namespace wuyze {
 
         virtual std::string toString() = 0;
         virtual bool fromString(const std::string& val) = 0;
-        virtual std::string getTypeName() = 0 ;
+        virtual std::string getTypeName() const = 0 ;
 
     private:
         std::string m_name;
@@ -42,12 +50,14 @@ namespace wuyze {
 
     template<class From, class To>
     class LexicalCast {
+    public:
         To operator()(const From& value) {
             try{
-                return boost::lexical_cast<From>(value);
+                return boost::lexical_cast<To>(value);
             }
             catch(const boost::bad_lexical_cast& ex ) {
-                std::cout << "lexical_cast error:" << ex.what() << std::endl;
+                // std::cout << "lexical_cast error:" << ex.what() << std::endl;
+                _ERROR("lexical_cast error:{}", ex.what());
                 throw;
             }
             
@@ -75,12 +85,13 @@ namespace wuyze {
             try{
                 //出发监听变量的函数
                 for(auto i : m_callback_set) {
-                    (*i)(value, m_value);
+                    i(value, m_value);
                 }
                 m_value = value;
             }
             catch(...) {
-                std::cout << "[" << __FILE__ << ":" << __LINE__ << "] setValue exception";
+                // std::cout << "[" << __FILE__ << ":" << __LINE__ << "] setValue exception";
+                _ERROR("setValue exception");
             }
         }
 
@@ -95,8 +106,9 @@ namespace wuyze {
                 return ToStr()(m_value);
             }
             catch( std::exception& e) {    
-                std::cout << "ConfigVar::toString() exception:" << e.what()
-                                                << " convert: " << typeid(m_value).name() << " to std::string" << std::endl;
+                // std::cout << "ConfigVar::toString() exception:" << e.what()
+                //                                 << " convert: " << typeid(m_value).name() << " to std::string" << std::endl;
+                _ERROR("ConfigVar::toString() exception:{} convert: {} to std::string", e.what(), typeid(m_value).name());
             }
             return "";
         }
@@ -107,9 +119,10 @@ namespace wuyze {
                 return true;
             }
             catch(const std::exception& ex)  {
-                std::cout << "ConfigVar::fromString() exception:" << ex.what()
-                                            << " convert:  std::string to " << typeid(value).name()
-                                            << " - " << value << std::endl;
+                // std::cout << "ConfigVar::fromString() exception:" << ex.what()
+                //                             << " convert:  std::string to " << typeid(m_value).name()
+                //                             << " - " << value << std::endl;
+                _ERROR("ConfigVar::fromString() exception:{} convert: std::string to {}", ex.what(), typeid(m_value).name());
             }
             return false;
         }
@@ -123,22 +136,45 @@ namespace wuyze {
 
     class MyConfigManager {
     public:
-        MyConfigManager(std::string& file): m_config_file(file) {
+        MyConfigManager() {
             m_configvar_set.clear();
         };
 
         //加载配置文件，
-        void loadYaml() {
+        void loadYaml(const std::string& file) {
 
+            try {
+                YAML::Node root = YAML::LoadFile(file);
+
+                
+                m_configvar_set.insert(MyConfigVar<int>::ptr(
+                    new MyConfigVar<int>(CONFIG_UTIL_VAR1, root[CONFIG_UTIL_VAR1].as<int>(),CONFIG_UTIL_VAR1)
+                ));
+                
+                m_configvar_set.insert(MyConfigVar<int>::ptr(
+                    new MyConfigVar<int>(CONFIG_UTIL_VAR2, root[CONFIG_UTIL_VAR2].as<int>(), CONFIG_UTIL_VAR2)
+                ));
+
+                m_configvar_set.insert(MyConfigVar<int>::ptr(
+                    new MyConfigVar<int>(CONFIG_UTIL_VAR3, root[CONFIG_UTIL_VAR3].as<int>(), CONFIG_UTIL_VAR3)
+                ));
+
+                m_configvar_set.insert(MyConfigVar<int>::ptr(
+                    new MyConfigVar<int>(CONFIG_UTIL_VAR4, root[CONFIG_UTIL_VAR4].as<int>(), CONFIG_UTIL_VAR4)
+                ));
+
+            }
+            catch(...) {
+                _ERROR("loadYaml ERROR");
+            }
         }
 
         //查找配置变量
-        template<class T>
-        typename MyConfigVar<T>::ptr lookup(const std::string& name) {
+        typename MyConfigVarBase::ptr lookup(const std::string& name) {
             for(auto it : m_configvar_set) {
                 if(it->getName() == name){
                     //删除操作
-                    return std::dynamic_pointer_cast<MyConfigVar<T>>(it);
+                    return it;
                 }
             }
             return nullptr;
@@ -158,7 +194,6 @@ namespace wuyze {
         }
 
     private:
-        std::string m_config_file;   //配置文件名
         std::set<MyConfigVarBase::ptr, typename MyConfigVarBase::less> m_configvar_set;
     };
 

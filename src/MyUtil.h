@@ -48,7 +48,7 @@ namespace wyze {
     public:
         static T* getInstance() {
             static T value;
-            return *value;
+            return &value;
         }
     };
 }

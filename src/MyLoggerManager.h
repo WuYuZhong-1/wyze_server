@@ -13,11 +13,19 @@
 
 
 //spd 带行号打印，同时输出console 和 文件
-#define DEBUG(...) SPDLOG_LOGGER_DEBUG(spdlog::default_logger_raw(), __VA_ARGS__);SPDLOG_LOGGER_DEBUG(spdlog::get("daily"), __VA_ARGS__)
-#define INFO(...) SPDLOG_LOGGER_INFO(spdlog::default_logger_raw(), __VA_ARGS__);SPDLOG_LOGGER_INFO(spdlog::get("daily"), __VA_ARGS__)
-#define WARN(...) SPDLOG_LOGGER_WARN(spdlog::default_logger_raw(), __VA_ARGS__);SPDLOG_LOGGER_WARN(spdlog::get("daily"), __VA_ARGS__)
-#define ERROR(...) SPDLOG_LOGGER_ERROR(spdlog::default_logger_raw(), __VA_ARGS__);SPDLOG_LOGGER_ERROR(spdlog::get("daily"), __VA_ARGS__)
-#define CRITICAL(...) SPDLOG_LOGGER_CRITICAL(spdlog::default_logger_raw(), __VA_ARGS__);SPDLOG_LOGGER_CRITICAL(spdlog::get("daily"), __VA_ARGS__)
+#define DEBUG(...)  do { SPDLOG_LOGGER_DEBUG(spdlog::default_logger_raw(), __VA_ARGS__);SPDLOG_LOGGER_DEBUG(spdlog::get("daily"), __VA_ARGS__); }while(0)
+#define INFO(...) do { SPDLOG_LOGGER_INFO(spdlog::default_logger_raw(), __VA_ARGS__);SPDLOG_LOGGER_INFO(spdlog::get("daily"), __VA_ARGS__); }while(0)
+#define WARN(...) do { SPDLOG_LOGGER_WARN(spdlog::default_logger_raw(), __VA_ARGS__);SPDLOG_LOGGER_WARN(spdlog::get("daily"), __VA_ARGS__); }while(0)
+#define ERROR(...) do { SPDLOG_LOGGER_ERROR(spdlog::default_logger_raw(), __VA_ARGS__);SPDLOG_LOGGER_ERROR(spdlog::get("daily"), __VA_ARGS__); }while(0)
+#define CRITICAL(...) do { SPDLOG_LOGGER_CRITICAL(spdlog::default_logger_raw(), __VA_ARGS__);SPDLOG_LOGGER_CRITICAL(spdlog::get("daily"), __VA_ARGS__); }while(0)
+
+extern bool log_init;
+
+#define _DEBUG(...) do { if(log_init) { DEBUG(__VA_ARGS__); } else { SPDLOG_DEBUG(__VA_ARGS__); } } while(0)
+#define _INFO(...) do { if(log_init) { INFO(__VA_ARGS__); } else { SPDLOG_INFO(__VA_ARGS__); } } while(0)
+#define _WARN(...) do { if(log_init) { WARN(__VA_ARGS__); } else { SPDLOG_WARN(__VA_ARGS__); } } while(0)
+#define _ERROR(...) do { if(log_init) { ERROR(__VA_ARGS__); } else { SPDLOG_ERROR(__VA_ARGS__); } } while(0)
+#define _CRITICAL(...) do { if(log_init) { CRITICAL(__VA_ARGS__); } else { SPDLOG_CRITICAL(__VA_ARGS__); } } while(0)
 
 namespace wyze {
 
