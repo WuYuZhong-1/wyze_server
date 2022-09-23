@@ -8,7 +8,7 @@ namespace wyze {
     MyLoggerManager::MyLoggerManager() 
     {
         try {
-            std::string file_pattern = "[%H-%m-%d %H:%M:%S] [%S:%#(%!)] [%n] [%l] [%thread:%t] : %v";
+            std::string file_pattern = "[%H-%m-%d %H:%M:%S] [%s:%#(%!)] [%n] [%l] [%thread:%t] : %v";
             //创建循环日志
             // auto rotating_logger = spdlog::rotating_logger_mt("rotating","rotating_log.txt", 1024*1024*4, 3);
 
@@ -24,7 +24,7 @@ namespace wyze {
             spdlog::flush_every(std::chrono::seconds(3));
 
             //控制台输出
-            std::string stdout_pattern = "[%H-%m-%d %H:%M:%S] [%S:%#(%!)] [%n] [%^%l%$] [thread:%t] : %v";
+            std::string stdout_pattern = "[%H-%m-%d %H:%M:%S] [%s:%#(%!)] [%n] [%^%l%$] [thread:%t] : %v";
             m_console = spdlog::stdout_color_mt("console");
             m_console->set_pattern(stdout_pattern);
             m_console->set_level(spdlog::level::debug);

@@ -1,4 +1,7 @@
 #include <iostream>
+#include "MyLoggerManager.h"
+#include "MyConfig.h"
+#include "MyUtil.h"
 #include "yaml-cpp/yaml.h"
 #include "spdlog/spdlog.h"
 #include "spdlog/async.h"
@@ -257,9 +260,7 @@ public:
     int m_j;
 };
 
-
-
-
+//重再 << ,使A类可以使用输出流
 std::ostream& operator<<(std::ostream& os, const A& a) {
     os << a.print();
     return os;
@@ -295,11 +296,73 @@ public:
 };
 
 
+//配置文件测试
+
+#define CONFIG_UTIL_VAR1         "wuyze1"
+#define CONFIG_UTIL_VAR2         "wuyze2"
+#define CONFIG_UTIL_VAR3         "wuyze3"
+#define CONFIG_UTIL_VAR4         "wuyze4"
+
+class ConfigTest {
+public:
+    void operator() (const std::string& file) {
+        //初始化
+        auto confman = wyze::MySinglePtr<wyze::MyConfigManager>::getInstance();
+        //加载配置文件
+        confman->loadYaml(file);
+
+        //创建监听函数
+        wyze::MyConfigCallBack<int> fun(1, [](const std::string& name, const int new_val, const int old_val) {
+            _INFO("name: {} change: new_value: {}, old_value: {}",name, new_val, old_val);
+        });
+
+        auto base_var = confman->lookup(CONFIG_UTIL_VAR1);
+        //是否找到该配置变量
+        if(base_var) {
+            auto var = std::dynamic_pointer_cast<wyze::MyConfigVar<int>>(base_var);
+            if(var) {   //是否能向下转型成功
+                var->addListener(fun);  //增加该变量数据改变出发函数
+                var->setValue(1000000); //测试出发函数
+            }
+        }
+
+        base_var = confman->lookup(CONFIG_UTIL_VAR2);
+        if(base_var) {
+            auto var = std::dynamic_pointer_cast<wyze::MyConfigVar<int>>(base_var);
+            if(var) {
+                var->addListener(wyze::MyConfigCallBack<int>(2,
+                [](const std::string& name, const int& new_val, const int& old_val){
+                    _INFO("name: {} change, new_value: {} , old_value: {}", name, new_val, old_val);
+                }));
+
+                var->setValue(222222);
+            }
+        }
+
+        wyze::MyConfigVar<int>::ptr int_var(new wyze::MyConfigVar<int>(CONFIG_UTIL_VAR1, 999, "int "));
+    
+        //测试添加重复
+        auto it = confman->addConfigVar(std::dynamic_pointer_cast<wyze::MyConfigVarBase>(int_var));
+        if(it.second == false) {
+            _INFO("FALSE");
+            auto var = std::dynamic_pointer_cast<wyze::MyConfigVar<int>>(*(it.first));
+            _INFO("name: {} , value:{}",var->getName(), var->getValue());
+        }
+        else {
+            _INFO("TRUE");
+        }
+    }
+};
+
+
+
+
 int main(int argc, char** argv)
 {
     // TestYaml()();
     // TestSpdlog()();
     // MyLexicalCast()();
-    shared_set()();
+    // shared_set()();
+    ConfigTest()("../test/config.yaml");
     return 0;
 }

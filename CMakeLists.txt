@@ -9,6 +9,7 @@ link_directories(
     )
 include_directories(
     ${PROJECT_SOURCE_DIR}/depend/include
+    ${PROJECT_SOURCE_DIR}/src
     )
 
 
@@ -20,6 +21,9 @@ set(SRC
     )
 
 set(TEST
+    src/MyLoggerManager.cpp
+    src/MyUtil.cpp
+    src/MyConfig.cpp
     test/test.cpp
     )
 

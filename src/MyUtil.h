@@ -6,6 +6,7 @@
  *  一些对工程有用的 小功能
  ****************************************/
 #include <functional>
+#include <memory>
 
 namespace wyze {
 
@@ -23,12 +24,12 @@ namespace wyze {
             }
         };
 
-        typedef std::function<void(const T& new_value, const T& old_value)> CallBack;
+        typedef std::function<void(const std::string& name,const T& new_value, const T& old_value)> CallBack;
         MyConfigCallBack(uint64_t flag, const CallBack& fun)
             : m_fun(fun), m_flag(flag) { }
         
-        void operator()(const T& new_value, const T& old_value) {
-            m_fun(new_value, old_value);
+        void operator()(const std::string& name, const T& new_value, const T& old_value) {
+            m_fun(name, new_value, old_value);
         }
 
         bool operator == (const MyConfigCallBack& other) {
@@ -49,6 +50,16 @@ namespace wyze {
         static T* getInstance() {
             static T value;
             return &value;
+        }
+    };
+
+    //单例模式，智能指针
+    template<class T>
+    class MySinglePtr {
+    public:
+        static std::shared_ptr<T> getInstance() {
+            static std::shared_ptr<T> value(new T);
+            return value;
         }
     };
 }

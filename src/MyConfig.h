@@ -49,7 +49,7 @@ namespace wyze {
     };
 
     template<class From, class To>
-    class LexicalCast {
+    class MyLexicalCast {
     public:
         To operator()(const From& value) {
             try{
@@ -66,7 +66,7 @@ namespace wyze {
 
 
     //模板类配置文件变量，可以为 内嵌类型变量，也可以是自定意义变量
-    template<class T, class FromStr = LexicalCast<std::string, T>, class ToStr = LexicalCast<T, std::string>>
+    template<class T, class FromStr = MyLexicalCast<std::string, T>, class ToStr = MyLexicalCast<T, std::string>>
     class MyConfigVar: public MyConfigVarBase {
     public:
         typedef std::shared_ptr<MyConfigVar> ptr;
@@ -85,7 +85,7 @@ namespace wyze {
             try{
                 //出发监听变量的函数
                 for(auto i : m_callback_set) {
-                    i(value, m_value);
+                    i(this->getName(), value, m_value);
                 }
                 m_value = value;
             }
@@ -143,6 +143,9 @@ namespace wyze {
         //加载配置文件，
         void loadYaml(const std::string& file) {
 
+            if(file.empty()) 
+                return;
+
             try {
                 YAML::Node root = YAML::LoadFile(file);
 
@@ -173,7 +176,7 @@ namespace wyze {
         typename MyConfigVarBase::ptr lookup(const std::string& name) {
             for(auto it : m_configvar_set) {
                 if(it->getName() == name){
-                    //删除操作
+                    //TODO::这里可以，需要修改为指定的配置变量类型
                     return it;
                 }
             }
@@ -191,6 +194,11 @@ namespace wyze {
                 }
             }
             return false;
+        }
+
+        //添加配置变量
+        auto addConfigVar(const MyConfigVarBase::ptr var) {
+            return m_configvar_set.insert(var);
         }
 
     private:
