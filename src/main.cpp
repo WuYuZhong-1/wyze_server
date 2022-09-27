@@ -14,31 +14,10 @@ int main(int argc, char** argv)
         default_server_config = argv[1];
     }
     //初始化配置管理类
-    wyze::MySingle<wyze::MyConfigManager>::getInstance()->loadYaml(default_server_config);
+    auto confman = wyze::MySinglePtr<wyze::MyConfigManager>::getInstance();
+    confman->loadYaml(default_server_config);
 
-    std::function<void(const std::string& ,const int,const int)> f1 = 
-        [](const std::string& name, const int new_value,const int old_new) {
-            _INFO("name: {} change, new_value: {}, old_new: {}",name,  new_value, old_new);
-        };
-
-    wyze::MyConfigCallBack<int> fun1(1, f1);
-
-    auto base_var = wyze::MySingle<wyze::MyConfigManager>::getInstance()->lookup(CONFIG_UTIL_VAR1);
-    if(base_var) {
-        auto int_var = std::dynamic_pointer_cast<wyze::MyConfigVar<int>>(base_var);
-        int_var->addListener(fun1);
-        int_var->setValue(100);
-    }
-
-    _INFO("{}", wyze::MySingle<wyze::MyConfigManager>::getInstance()->delConfigVar(CONFIG_UTIL_VAR2));
-    base_var = wyze::MySingle<wyze::MyConfigManager>::getInstance()->lookup(CONFIG_UTIL_VAR1);
-    if(base_var) {
-        auto int_var = std::dynamic_pointer_cast<wyze::MyConfigVar<int>>(base_var);
-        int_var->addListener(fun1);
-        int_var->setValue(100);
-    }
-
-    
+    //初始化 spdlog，配置相关 log
     wyze::MyLoggerManager manager;
 
     DEBUG("debug");

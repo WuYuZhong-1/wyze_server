@@ -1,20 +1,22 @@
 #include "MysqlConn.h"
 #include <iostream>
+#include "MyLoggerManager.h"
 
-namespace wuyze {
-    using namespace wyze;
+namespace wyze {
 
     MysqlConn::MysqlConn()
     {
         m_mysql = mysql_init(nullptr);
         if(m_mysql == nullptr) {
-            std::cout << "mysql_init() error\n";
+            // std::cout << "mysql_init() error\n";
+            ERROR("mysql_init() error");
             return;
         }
 
         int ret = mysql_set_character_set(m_mysql, "utf8");
         if(ret != 0) {
-            std::cout << "mysql_set_character_set() error: " << mysql_error(m_mysql);
+            // std::cout << "mysql_set_character_set() error: " << mysql_error(m_mysql);
+            ERROR("mysql_set_character_set() error:{}", mysql_error(m_mysql));
         }
     }
 

@@ -355,7 +355,77 @@ public:
 };
 
 
+//默认构造，复制构造，复制构造，等于操作符，移动构造，移动赋值
+std::ostream& operator<<(std::ostream& os, const wyze::StDaily& val) {
+    return os << "StDaily: {" << val.hour << "," << val.min << "}";
+}
 
+std::ostream& operator<<(std::ostream& os, const wyze::StRotating& val) {
+    return os << "StRotating: {" << val.filesize << "," << val.filenum << "}";
+}
+
+class TorTest {
+public:
+    void operator() () {
+        int count = 10;
+
+        std::cout << "默认构造函数测试：\n" ;
+        while(count--) {
+            std::cout << wyze::StDaily() << std::endl;      //临时变量在引用时是 const 类型
+            std::cout << wyze::StRotating() << std::endl;
+        }
+
+        std::cout <<  "复制构造函数：\n";
+        // wyze::StDaily daily{10,20};             //当有构造函数后，编译器不会为其自动生成其他构造函数
+        wyze::StDaily daily1;
+        daily1.hour = 3;
+        daily1.min = 4;
+        wyze::StRotating rotating1{10, 20};      //位定义构造函数，编译器自动为其生成构造函数
+        wyze::StRotating rotating2{1};
+
+        std::cout << daily1 << std::endl;
+        std::cout << rotating1 << std::endl;
+        std::cout << rotating2 << std::endl;
+
+        auto daily2 = daily1;
+        auto rotating3 = rotating1;
+
+        std::cout << daily2 << std::endl;
+        std::cout << rotating3 << std::endl;
+
+        std::cout << "等于运算：\n";
+        if(daily1 == daily2) {
+            std::cout << "true\n"; 
+        }
+        else {
+            std::cout << "false\n";
+        }
+
+        // if(rotating1 == rotating3)       //没有等于操作父重载
+        rotating3 = rotating2;
+        std::cout << rotating3;
+
+
+    }
+};
+
+
+#include <vector>
+
+class ContainTest {
+public:
+    void operator()() {{
+        std::vector<int>  vec1 = {1, 3,5};
+        std::vector<int> vec2 = {1, 3, 6};
+
+        if(vec1 == vec2) {
+            std::cout << "true\n";
+        }
+        else {
+            std::cout << "false\n";
+        }
+    }}
+};
 
 int main(int argc, char** argv)
 {
@@ -363,6 +433,9 @@ int main(int argc, char** argv)
     // TestSpdlog()();
     // MyLexicalCast()();
     // shared_set()();
-    ConfigTest()("../test/config.yaml");
+    // ConfigTest()("../test/config.yaml");
+    // TorTest()();
+    ContainTest()();
+
     return 0;
 }

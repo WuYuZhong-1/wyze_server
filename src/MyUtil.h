@@ -19,7 +19,7 @@ namespace wyze {
 
         //set 集合需要用到比较
         struct less {
-            bool operator()(const MyConfigCallBack<T>& a, const MyConfigCallBack<T>& b) {
+            bool operator()(const MyConfigCallBack<T>& a, const MyConfigCallBack<T>& b) const {
                 return a.m_flag < b.m_flag;
             }
         };

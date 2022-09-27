@@ -8,8 +8,6 @@
 
 namespace wyze {
 
-    #define logger      std::cout       //替换，此类在别处单独拿出来还可以使用
-
     class MysqlConn {
     public:
         //初始化数据库连接

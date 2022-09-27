@@ -1,4 +1,17 @@
-wuyze1: 1
-wuyze2: 2
-wuyze3: 3
-wuyze4: 4
+logger:                                                                         #打印信息配置   
+  - first:                                                                        #第一个打印的 logger信息
+    name: "stdout"                                                              #logger的名称
+    pattern: "[%H-%m-%d %H:%M:%S] [%s:%#(%!)] [%n] [%^%l%$] [thread:%t] : %v"   #logger的打印格式
+    level: 1                                                                    # logger打印的级别
+    append: 1                                                                   #logger打印的方式，输出信息方式(1:stdout输出，2：每日文件输出，3:循环文件输出)
+    file: 1                                                                     #输出信息的方式为文件，则有文件名
+    firstparameter: 1                                                           #输出方式的第一个参数
+    secondparameter: 1                                                          #输出方式的第二个参数
+  - second:                                                                       #第二个打印的 logger信息(1:stdout输出，2：每日文件输出，3:循环文件输出)
+    name: "daily"                                                               #logger的名称
+    pattern: "[%H-%m-%d %H:%M:%S] [%s:%#(%!)] [%n] [%l] [%thread:%t] : %v"      #logger的打印格式
+    level: 2                                                                    # logger打印的级别
+    append: 2                                                                   #logger打印的方式，输出信息方式
+    file: "logs/daily_log.txt"                                                  #输出信息的方式为文件，则有文件名
+    firstparameter: 2                                                           #输出方式的第一个参数
+    secondparameter: 30  
