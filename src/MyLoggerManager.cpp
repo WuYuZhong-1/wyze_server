@@ -11,31 +11,30 @@ namespace wyze {
         try {
 
             auto confman = MySinglePtr<MyConfigManager>::getInstance();
-            auto base_var = confman->lookup(CONFIG_UTIL_LOGGER);
-            if(base_var) {
-                auto var = std::dynamic_pointer_cast<MyConfigVar<std::set<StLogger>>>(base_var);
-                if(var){
-                    _INFO("logger: {}", var->toString());
+            auto var = confman->lookup<std::set<StLogger>>(CONFIG_UTIL_LOGGER);
+            
+            if(var){
+                _INFO("logger: {}", var->toString());
 
-                    for(auto& it : var->getValue()) {
-                        std::string pattern = it.pattern;
-                        std::shared_ptr<spdlog::logger> log;
-                        if(it.append == EnAppendType::daily) {
-                            log = spdlog::daily_logger_format_mt(it.name, it.file, it.para.daily.hour, it.para.daily.min);
-                        }
-                        else if(it.append == EnAppendType::rotating) {
-                            log = spdlog::rotating_logger_mt(it.name, it.file, it.para.rotating.filesize, it.para.rotating.filenum);
-                        }
-                        else if(it.append == EnAppendType::stdout) {
-                            log = spdlog::stdout_color_mt(it.name);
-                            spdlog::set_default_logger(log);
-                        }
-                        log->set_level(static_cast<spdlog::level::level_enum>(it.level));
-                        log->set_pattern(it.pattern);
+                for(auto& it : var->getValue()) {
+                    std::string pattern = it.pattern;
+                    std::shared_ptr<spdlog::logger> log;
+                    if(it.append == EnAppendType::daily) {
+                        log = spdlog::daily_logger_format_mt(it.name, it.file, it.para.daily.hour, it.para.daily.min);
                     }
-
+                    else if(it.append == EnAppendType::rotating) {
+                        log = spdlog::rotating_logger_mt(it.name, it.file, it.para.rotating.filesize, it.para.rotating.filenum);
+                    }
+                    else if(it.append == EnAppendType::stdout) {
+                        log = spdlog::stdout_color_mt(it.name);
+                        spdlog::set_default_logger(log);
+                    }
+                    log->set_level(static_cast<spdlog::level::level_enum>(it.level));
+                    log->set_pattern(it.pattern);
                 }
+
             }
+            
 
             // std::string file_pattern = "[%H-%m-%d %H:%M:%S] [%s:%#(%!)] [%n] [%l] [%thread:%t] : %v";
             // //创建循环日志

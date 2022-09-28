@@ -2,6 +2,7 @@
 #include "MyLoggerManager.h"
 #include "MyUtil.h"
 #include "MyConfig.h"
+#include "MysqlConnPool.h"
 
 // using namespace wyze;
 
@@ -19,6 +20,11 @@ int main(int argc, char** argv)
 
     //初始化 spdlog，配置相关 log
     wyze::MyLoggerManager manager;
+
+    //初始化线程池
+    wyze::MysqlConnPool::getInstance();
+
+    // auto var_ = confman->lookup<wyze::MyConfigVar<std::set<wyze::StLogger>>(CONFIG_UTIL_LOGGER);
 
     DEBUG("debug");
     INFO("info");

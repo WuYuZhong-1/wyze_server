@@ -316,33 +316,29 @@ public:
             _INFO("name: {} change: new_value: {}, old_value: {}",name, new_val, old_val);
         });
 
-        auto base_var = confman->lookup(CONFIG_UTIL_VAR1);
+        auto var1 = confman->lookup<int>(CONFIG_UTIL_VAR1);
         //是否找到该配置变量
-        if(base_var) {
-            auto var = std::dynamic_pointer_cast<wyze::MyConfigVar<int>>(base_var);
-            if(var) {   //是否能向下转型成功
-                var->addListener(fun);  //增加该变量数据改变出发函数
-                var->setValue(1000000); //测试出发函数
-            }
+        if(var1) {
+            var1->addListener(fun);  //增加该变量数据改变出发函数
+            var1->setValue(1000000); //测试出发函数
         }
 
-        base_var = confman->lookup(CONFIG_UTIL_VAR2);
-        if(base_var) {
-            auto var = std::dynamic_pointer_cast<wyze::MyConfigVar<int>>(base_var);
-            if(var) {
-                var->addListener(wyze::MyConfigCallBack<int>(2,
-                [](const std::string& name, const int& new_val, const int& old_val){
-                    _INFO("name: {} change, new_value: {} , old_value: {}", name, new_val, old_val);
-                }));
+        auto var2 = confman->lookup<int>(CONFIG_UTIL_VAR2);
+        if(var2) {
+            
+            var2->addListener(wyze::MyConfigCallBack<int>(2,
+            [](const std::string& name, const int& new_val, const int& old_val){
+                _INFO("name: {} change, new_value: {} , old_value: {}", name, new_val, old_val);
+            }));
 
-                var->setValue(222222);
-            }
+            var2->setValue(222222);
         }
 
         wyze::MyConfigVar<int>::ptr int_var(new wyze::MyConfigVar<int>(CONFIG_UTIL_VAR1, 999, "int "));
     
         //测试添加重复
-        auto it = confman->addConfigVar(std::dynamic_pointer_cast<wyze::MyConfigVarBase>(int_var));
+        // auto it = confman->addConfigVar(std::dynamic_pointer_cast<wyze::MyConfigVarBase>(int_var));
+        auto it = confman->addConfigVar(int_var);
         if(it.second == false) {
             _INFO("FALSE");
             auto var = std::dynamic_pointer_cast<wyze::MyConfigVar<int>>(*(it.first));

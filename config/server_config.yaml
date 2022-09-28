@@ -15,3 +15,14 @@ logger:                                                                         
     file: "logs/daily_log.txt"                                                  #输出信息的方式为文件，则有文件名
     firstparameter: 2                                                           #输出方式的第一个参数
     secondparameter: 30  
+
+mysql:
+  host: "127.0.0.1"       #mysql ip地址
+  port: 3306              #mysql 端口号
+  username: "root"        #mysql 用户名
+  password: "wuli"        #mysql 密码
+  dbname: "wyze"          #mysql 数据库
+  minsize: 50             #mysql连接最小数， 当连接池中的数目小于此数，生产线程会生产连接数
+  maxsize: 100            #mysql连接最大数，  当连接池中的数目大于此数，摧毁线程会减少连接数
+  timeout: 2000           #单位 msec，获取取连接时，没有连接时等待的超时时间,
+  maxidletime: 5000       #单位 msec，最大空闲时间，当连接数超过最大连接数时，不一定减少连接数目，而是查看最久为使用的连接的空闲时间来判断，超过空闲时间才删除

@@ -17,6 +17,8 @@ set(SRC
     src/MyLoggerManager.cpp
     src/MyUtil.cpp
     src/MyConfig.cpp
+    src/MysqlConn.cpp
+    src/MysqlConnPool.cpp
     src/main.cpp
     )
 

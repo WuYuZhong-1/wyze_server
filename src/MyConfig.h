@@ -9,11 +9,13 @@
 #include "yaml-cpp/yaml.h"
 #include <sstream>
 #include <set>
+#include <vector>
+#include <vector>
 
 
 
-#define CONFIG_UTIL_LOGGER         "logger"
-#define CONFIG_UTIL_VAR2         "wuyze2"
+#define CONFIG_UTIL_LOGGER          "logger"
+#define CONFIG_UTIL_MYSQL           "mysql"
 #define CONFIG_UTIL_VAR3         "wuyze3"
 #define CONFIG_UTIL_VAR4         "wuyze4"
 
@@ -83,6 +85,8 @@ namespace wyze {
     };
 
     /***************************************配置变量类只函数数据， 所以使用 struct 定义***********************************************************/
+
+    //logger配置变量
     enum EnAppendType { unknow = 0, stdout = 1, daily, rotating };
 
     struct StDaily {
@@ -206,14 +210,89 @@ namespace wyze {
             return ss.str();
         }
     };
-    
 
+
+    //mysql配置变量
+
+    #define WYZE_MYSQL_HOST          "host"
+    #define WYZE_MYSQL_PORT          "port"
+    #define WYZE_MYSQL_USERNAME      "username"
+    #define WYZE_MYSQL_PASSWORD      "password"
+    #define WYZE_MYSQL_DBNAME        "dbname"
+    #define WYZE_MYSQL_MINSIZE       "minsize"
+    #define WYZE_MYSQL_MAXSIZE       "maxsize"
+    #define WYZE_MYSQL_TIMEOUT       "timeout"
+    #define WYZE_MYSQL_MAXIDLETIME   "maxidletime" 
+
+    struct StMysql {
+        std::string host;
+        uint16_t port;
+        std::string username;
+        std::string password;
+        std::string dbname;
+        uint32_t minsize;
+        uint32_t maxsize;
+        uint32_t timeout;
+        uint32_t maxidletime;
+
+        bool operator==(const StMysql& other) const {
+            if( host == other.host && port == other.port
+                && username == other.username && password == other.password
+                && dbname == other.dbname && minsize == other.minsize
+                && maxsize == other.maxsize && timeout == other.timeout
+                && maxidletime == other.maxidletime)
+                return true;
+            return false;
+        }
+    };
+    
+    //偏特化
+    template <>
+    class MyLexicalCast<std::string, StMysql> {
+    public:
+        StMysql operator()(const std::string& val) {
+            YAML::Node root = YAML::Load(val);
+            StMysql mysql;
+            mysql.host = root[WYZE_MYSQL_HOST].as<std::string>();
+            mysql.port = root[WYZE_MYSQL_PORT].as<uint16_t>();
+            mysql.username = root[WYZE_MYSQL_USERNAME].as<std::string>();
+            mysql.password = root[WYZE_MYSQL_PASSWORD].as<std::string>();
+            mysql.dbname = root[WYZE_MYSQL_DBNAME].as<std::string>();
+            mysql.minsize = root[WYZE_MYSQL_MINSIZE].as<uint32_t>();
+            mysql.maxsize = root[WYZE_MYSQL_MAXSIZE].as<uint32_t>();
+            mysql.timeout = root[WYZE_MYSQL_TIMEOUT].as<uint32_t>();
+            mysql.maxidletime = root[WYZE_MYSQL_MAXIDLETIME].as<uint32_t>();
+
+            return mysql;
+        }
+    };
+
+    template<>
+    class MyLexicalCast<StMysql, std::string> {
+    public:
+        std::string operator()(const StMysql& val) {
+            std::stringstream ss;
+            ss << "["
+                << "host:\"" << val.host << "\", "
+                << "port:\"" << val.port << "\", "
+                << "username:\"" << val.username << "\", "
+                << "password:\"" << val.password << "\", "
+                << "dbname:\"" << val.dbname << "\", "
+                << "minsize:\"" << val.minsize << "\", "
+                << "maxsize:\"" << val.maxsize << "\", "
+                << "timeout:\"" << val.timeout << "\", "
+                << "maxidletime:\"" << val.maxidletime << " ]";
+
+            return ss.str();
+        }
+    };
 
 
     //配置文件变量类
     class MyConfigVarBase {
     public:
-        typedef std::shared_ptr<MyConfigVarBase> ptr;
+        // typedef std::shared_ptr<MyConfigVarBase> ptr;
+        using ptr = std::shared_ptr<MyConfigVarBase>;
 
         //set集合需要用到的比较
         struct less {
@@ -242,7 +321,8 @@ namespace wyze {
     template<class T, class FromStr = MyLexicalCast<std::string, T>, class ToStr = MyLexicalCast<T, std::string>>
     class MyConfigVar: public MyConfigVarBase {
     public:
-        typedef std::shared_ptr<MyConfigVar> ptr;
+        // typedef std::shared_ptr<MyConfigVar> ptr;
+        using ptr = std::shared_ptr<MyConfigVar>;
 
         //TODO::  构造函数中，需要用到模板 T 对象的复制构造函数
         MyConfigVar(const std::string& name, const T& value, const std::string& desc)
@@ -311,6 +391,12 @@ namespace wyze {
     public:
         MyConfigManager() {
             m_configvar_set.clear();
+            init_func_vec.clear();
+            //TODO::有待改进
+            init_func_vec.push_back(std::bind(&MyConfigManager::init_logger,this,std::placeholders::_1));
+            init_func_vec.push_back(std::bind(&MyConfigManager::init_mysql, this, std::placeholders::_1));
+            // init_func_vec.push_back(std::bind(&MyConfigManager::init<std::set<StLogger>>,
+            //             this, std::placeholders::_1, CONFIG_UTIL_LOGGER, std::set<StLogger>()));
         };
 
         //加载配置文件，
@@ -321,21 +407,27 @@ namespace wyze {
 
             try {
                 YAML::Node root = YAML::LoadFile(file);   
-                init_logger(root);
-                
-
+                for(auto& fun : init_func_vec) {
+                    fun(root);
+                }
             }
             catch(...) {
                 _ERROR("loadYaml ERROR");
             }
         }
 
+
         //查找配置变量
-        typename MyConfigVarBase::ptr lookup(const std::string& name) {
+        template<class T>
+        typename MyConfigVar<T>::ptr lookup(const std::string& name) {
             for(auto it : m_configvar_set) {
                 if(it->getName() == name){
                     //TODO::这里可以，需要修改为指定的配置变量类型
-                    return it;
+                    auto ret = std::dynamic_pointer_cast<MyConfigVar<T>>(it);
+                    if( !ret ) {
+                        _ERROR("name:{}, typeid:{}", it->getName(), it->getTypeName());
+                    }
+                    return  ret;
                 }
             }
             return nullptr;
@@ -361,24 +453,37 @@ namespace wyze {
 
     private:
 
+        //TODO::有待改进
+        // template<class T>
+        // void init(const YAML::Node& root, const std::string& name, const T type) {
+        //     auto value = root[name];
+        //     std::stringstream ss;
+        //     ss << value;
+
+        //     auto var = lookup<decltype(type)>(name);
+        //     if(var) {
+        //         var->fromString(ss.str());
+        //     }
+        //     else {
+        //         typename MyConfigVar<decltype(type)>::ptr v;
+        //         v->reset(new MyConfigVar<decltype(type)>(name, T(), name));
+        //         if(v->fromString(ss.str()))
+        //             addConfigVar(v);
+        //     }
+        // }
+
         //logger 配置文件的加载
         void init_logger(const YAML::Node& root) {
 
             auto value = root[CONFIG_UTIL_LOGGER];
             std::stringstream ss ;
             ss << value;
-            auto var = lookup(CONFIG_UTIL_LOGGER);
+
+            //TODO::这里应该可以改进，用到模板类
+            auto var = lookup<std::set<StLogger>>(CONFIG_UTIL_LOGGER);
             if(var) {
                 //找到该变量
-                auto logger_var = std::dynamic_pointer_cast<MyConfigVar<std::set<StLogger>>>(var);
-                if(logger_var) {
-                    //转换成功
-                    logger_var->fromString(ss.str());
-                }
-                else {
-                    //这里报错
-                    _ERROR("init_logger error, typeid is {}", var->getTypeName());
-                }
+                var->fromString(ss.str());               
             }
             else {
                 //未找到
@@ -387,10 +492,31 @@ namespace wyze {
                     addConfigVar( v);
                 }             
             }
+            
+        }
+        //mysql 配置文件的加载
+        void init_mysql(const YAML::Node& root) {
+            YAML::Node node = root[CONFIG_UTIL_MYSQL];
+            std::stringstream ss;
+            ss << node;
+
+            auto var = lookup<StMysql>(CONFIG_UTIL_MYSQL);
+            if(var) {
+                var->fromString(ss.str());
+            }
+            else {
+                MyConfigVar<StMysql>::ptr v(new MyConfigVar<StMysql>(CONFIG_UTIL_MYSQL, StMysql(),CONFIG_UTIL_MYSQL));
+
+                if(v->fromString(ss.str())) {
+                    addConfigVar(v);
+                }
+            }
+
         }
 
     private:
         std::set<MyConfigVarBase::ptr, typename MyConfigVarBase::less> m_configvar_set;
+        std::vector<std::function<void(const YAML::Node&)>> init_func_vec;
     };
 
 }
