@@ -16,7 +16,7 @@
 
 #define CONFIG_UTIL_LOGGER          "logger"
 #define CONFIG_UTIL_MYSQL           "mysql"
-#define CONFIG_UTIL_VAR3         "wuyze3"
+#define CONFIG_UTIL_LIBEVENT        "libevent"
 #define CONFIG_UTIL_VAR4         "wuyze4"
 
 //重载less 片特滑
@@ -288,6 +288,54 @@ namespace wyze {
     };
 
 
+    //libevent 配置参数
+    #define WYZE_LIBEVENT_HOST          "host"
+    #define WYZE_LIBEVENT_PORT          "port"
+    #define WYZE_LIBEVENT_BASESIZE      "basesize"
+
+    struct StEvent {
+        std::string host;
+        uint16_t port;
+        int basesize;
+
+        bool operator==(const StEvent& other) const {
+            if( host == other.host && port == other.port
+                && basesize == other.basesize)
+                return true;
+            return false;
+        }
+    };
+
+    //偏特化
+    template<>
+    class MyLexicalCast<std::string, StEvent> {
+    public:
+        StEvent operator()(const std::string& val) {
+            YAML::Node root = YAML::Load(val);
+
+            StEvent event;
+            event.host = root[WYZE_LIBEVENT_HOST].as<std::string>();
+            event.port = root[WYZE_LIBEVENT_PORT].as<uint16_t>();
+            event.basesize = root[WYZE_LIBEVENT_BASESIZE].as<int>();
+
+            return event;
+        }
+    };
+
+    template<>
+    class MyLexicalCast<StEvent, std::string> {
+    public:
+        std::string operator()(const StEvent& val) {
+            std::stringstream ss;
+            ss << "["
+                << "host:\"" << val.host << "\", "
+                << "port:\"" << val.port << "\", "
+                << "basesize:\"" << val.basesize << "\" ]";
+            return ss.str();
+        }
+    };
+
+
     //配置文件变量类
     class MyConfigVarBase {
     public:
@@ -397,6 +445,8 @@ namespace wyze {
             init_func_vec.push_back(std::bind(&MyConfigManager::init_mysql, this, std::placeholders::_1));
             // init_func_vec.push_back(std::bind(&MyConfigManager::init<std::set<StLogger>>,
             //             this, std::placeholders::_1, CONFIG_UTIL_LOGGER, std::set<StLogger>()));
+        
+            init_func_vec.push_back(std::bind(&MyConfigManager::init_libevent, this, std::placeholders::_1));        
         };
 
         //加载配置文件，
@@ -512,6 +562,23 @@ namespace wyze {
                 }
             }
 
+        }
+
+        //libevent 配置
+        void init_libevent(const YAML::Node& root) {
+            YAML::Node node = root[CONFIG_UTIL_LIBEVENT];
+            std::stringstream ss;
+            ss << node;
+
+            auto var = lookup<StEvent>(CONFIG_UTIL_LIBEVENT);
+            if(var) {
+                var->fromString(ss.str());
+            }
+            else {
+                MyConfigVar<StEvent>::ptr v(new MyConfigVar<StEvent>(CONFIG_UTIL_LIBEVENT, StEvent(), CONFIG_UTIL_LIBEVENT));
+                if(v->fromString(ss.str()))
+                    addConfigVar(v);
+            }
         }
 
     private:

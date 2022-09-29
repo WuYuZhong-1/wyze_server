@@ -26,3 +26,8 @@ mysql:
   maxsize: 100            #mysql连接最大数，  当连接池中的数目大于此数，摧毁线程会减少连接数
   timeout: 2000           #单位 msec，获取取连接时，没有连接时等待的超时时间,
   maxidletime: 5000       #单位 msec，最大空闲时间，当连接数超过最大连接数时，不一定减少连接数目，而是查看最久为使用的连接的空闲时间来判断，超过空闲时间才删除
+
+libevent:
+  host: "0.0.0.0"         #监听的ip地址
+  port: 9854              #监听的端口号
+  basesize: 10            #除了 listen base 外，wtire/read base数目

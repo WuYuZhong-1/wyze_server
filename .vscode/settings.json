@@ -57,6 +57,7 @@
         "forward_list": "cpp",
         "unordered_set": "cpp",
         "iomanip": "cpp",
-        "cfenv": "cpp"
+        "cfenv": "cpp",
+        "future": "cpp"
     }
 }

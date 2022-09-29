@@ -3,6 +3,9 @@
 #include "MyUtil.h"
 #include "MyConfig.h"
 #include "MysqlConnPool.h"
+#include "MyTcpServerEvent.h"
+
+#include "MySocketEvent.h"
 
 // using namespace wyze;
 
@@ -19,17 +22,18 @@ int main(int argc, char** argv)
     confman->loadYaml(default_server_config);
 
     //初始化 spdlog，配置相关 log
-    wyze::MyLoggerManager manager;
+    // wyze::MySinglePtr<wyze::MyLoggerManager>::getInstance();
+    wyze::MyLoggerManager loggerMan;
 
-    //初始化线程池
+    //初始化mysql 连接程池
     wyze::MysqlConnPool::getInstance();
 
-    // auto var_ = confman->lookup<wyze::MyConfigVar<std::set<wyze::StLogger>>(CONFIG_UTIL_LOGGER);
+    wyze::MyTcpServerEvent* tcpserver = new wyze::MyTcpServerEvent();
 
-    DEBUG("debug");
-    INFO("info");
+    tcpserver->dispatch();
+
     // WARN("warn");
-
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    // while(1)
+    //     std::this_thread::sleep_for(std::chrono::seconds(1));
     return 0;
 }
