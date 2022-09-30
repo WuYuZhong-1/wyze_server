@@ -8,14 +8,12 @@ namespace wyze
 
     class MyBufferEvent {
     public:
-        MyBufferEvent(struct bufferevent* bev);
-        ~MyBufferEvent();
+        virtual void readEvent(bufferevent* bev);
+        virtual void writeEvent(bufferevent* bev);
 
-        void readEvent(struct bufferevent* bev);
-        void writeEvent(struct bufferevent* bev);
-
-    private:
-        struct bufferevent* m_bev;
+    protected:
+        char m_buf[1024]{0};
+        int m_len = 0;
     };
 
 

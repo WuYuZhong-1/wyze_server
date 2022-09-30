@@ -1,28 +1,26 @@
 #include "MyBufferEvent.h"
 #include <stdio.h>
+#include <string.h>
+#include "MyLoggerManager.h"
+#include <ctype.h>
 
 
 namespace wyze
 {
-    MyBufferEvent::MyBufferEvent(struct bufferevent* bev):m_bev(bev)
+    void MyBufferEvent::readEvent(bufferevent* bev)
     {
-    }   
-
-    MyBufferEvent::~MyBufferEvent()
-    {
-        bufferevent_free(m_bev);
+        memset(m_buf, 0, sizeof(m_buf));
+        m_len = bufferevent_read(bev, m_buf, sizeof(m_buf));
+        INFO("client:{}", m_buf);
+        for(int i = 0; i < m_len; ++i) {
+            m_buf[i] = toupper(m_buf[i]);
+        }
+        bufferevent_write(bev, m_buf, m_len);
     }
 
-    void MyBufferEvent::readEvent(struct bufferevent* bev)
+    void MyBufferEvent::writeEvent(bufferevent* bev)
     {
-        printf("bev=%p\n",bev);
-        printf("m_bev=%p\n",m_bev);
-    }
-
-    void MyBufferEvent::writeEvent(struct bufferevent* bev)
-    {
-        printf("bev=%p\n",bev);
-        printf("m_bev=%p\n",m_bev);
+        // printf("bev=%p\n",bev);
     }
 
 

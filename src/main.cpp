@@ -22,8 +22,7 @@ int main(int argc, char** argv)
     confman->loadYaml(default_server_config);
 
     //初始化 spdlog，配置相关 log
-    // wyze::MySinglePtr<wyze::MyLoggerManager>::getInstance();
-    wyze::MyLoggerManager loggerMan;
+    wyze::MySinglePtr<wyze::MyLoggerManager>::getInstance();
 
     //初始化mysql 连接程池
     wyze::MysqlConnPool::getInstance();

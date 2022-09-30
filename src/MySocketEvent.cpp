@@ -111,8 +111,8 @@ namespace wyze {
         );
         bufferevent_enable(bev, EV_READ | EV_WRITE);
 
-        m_bufferEvents_map.insert(std::make_pair(cfd,new MyBufferEvent(bev)));
-        m_eventcount++;
+        m_bufferEvents_map.insert(std::make_pair(cfd,new MyBufferEvent));
+        ++m_eventcount;
 
         return true;
     }
@@ -134,14 +134,15 @@ namespace wyze {
         auto mybev = m_bufferEvents_map[bufferevent_getfd(bev)];
 
         if(events & BEV_EVENT_EOF) {
-            WARN("connection closed");
+            INFO("connection closed");
         }
         else if(events & BEV_EVENT_ERROR) {
             WARN("Got an error on the connection: {}", strerror(errno));
         }
-
+        --m_eventcount;
         m_bufferEvents_map.erase(bufferevent_getfd(bev));
         delete mybev;
+        bufferevent_free(bev);
     }
 
 }
