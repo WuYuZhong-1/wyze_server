@@ -28,8 +28,33 @@ namespace wyze {
         m_readfd = pipefd[0];
         m_writefd = pipefd[1];
 
+        //设置读管道为非阻塞状态
+        evutil_make_socket_nonblocking(m_readfd);
+
         //设置读管道
-        m_evfifo = event_new(m_base, m_readfd, EV_READ | EV_PERSIST, [](int fd, short what, void* arg){}, this);
+        m_evfifo = event_new(m_base, m_readfd, EV_READ | EV_PERSIST, [](int fd, short what, void* arg){
+
+            MySocketEvent* m_this = (MySocketEvent*)arg;
+            int cfd = 0;
+            int len = 0;
+            do {
+                len = read(fd, &cfd, sizeof(cfd));
+                if(len == -1) {
+                    if(errno == EAGAIN) 
+                        return;
+                    else {
+                        ERROR("pipe error: {}", strerror(errno));
+                        return;
+                    }
+                }
+                    
+
+                // INFO("read: len:{}, data:{}", len, cfd);
+                m_this->addEvent(cfd, nullptr);
+            }while(true);
+             
+        }, this);
+
         if(!m_evfifo) {
             WARN("evfifo error");
             return;
@@ -83,9 +108,12 @@ namespace wyze {
     bool MySocketEvent::addEvent(int cfd, struct sockaddr_in* addr)
     {
         //设置监听，创建 MyBufferEvent
-        char ip[32] ={0};
-        DEBUG("client ip = {}, port = {} add to thread = {}", evutil_inet_ntop(AF_INET, &addr->sin_addr.s_addr, ip, sizeof(ip)),
-                                                                addr->sin_port, m_thredId);
+        if(addr != nullptr) {
+            char ip[32] ={0};
+            DEBUG("client ip = {}, port = {} add to thread = {}", evutil_inet_ntop(AF_INET, &addr->sin_addr.s_addr, ip, sizeof(ip)),
+                                                                    addr->sin_port, m_thredId);
+        }
+
         struct bufferevent* bev = bufferevent_socket_new(m_base, cfd, BEV_OPT_CLOSE_ON_FREE);
         if(!bev) {
             ERROR("create bufferevent error");
@@ -109,12 +137,24 @@ namespace wyze {
             },
             this
         );
+
+        //设置超时
+        struct timeval tv = {10, 0};
+        bufferevent_set_timeouts(bev,&tv, nullptr);
+
         bufferevent_enable(bev, EV_READ | EV_WRITE);
 
         m_bufferEvents_map.insert(std::make_pair(cfd,new MyBufferEvent));
         ++m_eventcount;
 
         return true;
+    }
+
+
+    bool MySocketEvent::addfd(int cfd)
+    {
+        // INFO("cfd:{}", cfd);
+        write(m_writefd,&cfd, sizeof(cfd));
     }
 
     void MySocketEvent::readEvent(struct bufferevent* bev)
@@ -139,6 +179,10 @@ namespace wyze {
         else if(events & BEV_EVENT_ERROR) {
             WARN("Got an error on the connection: {}", strerror(errno));
         }
+        else if(events & BEV_EVENT_TIMEOUT && events & BEV_EVENT_READING) {
+            WARN("reading timeout");
+        }
+
         --m_eventcount;
         m_bufferEvents_map.erase(bufferevent_getfd(bev));
         delete mybev;

@@ -14,6 +14,7 @@ namespace wyze {
         if(signal(SIGPIPE, SIG_IGN) == SIG_ERR)
             return;
 
+
         do {
             m_base = event_base_new();
             if(m_base == nullptr) {
@@ -74,7 +75,9 @@ namespace wyze {
 
     void MyTcpServerEvent::clientEvent(int cfd, struct sockaddr_in *addr)
     {
-        m_eventbase[selectSocketEvent()].addEvent(cfd, addr);
+        // 这里可能存在多线程崩溃
+        // m_eventbase[selectSocketEvent()].addEvent(cfd, addr);
+        m_eventbase[selectSocketEvent()].addfd(cfd);
     }
 
     void MyTcpServerEvent::clientConn(evconnlistener* listener, int cfd,

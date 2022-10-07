@@ -6,6 +6,8 @@
 #include <atomic>
 #include <map>
 #include "MyBufferEvent.h"
+#include <vector>
+#include <mutex>
 
 namespace wyze {
 
@@ -18,6 +20,7 @@ namespace wyze {
         void loopbreak();
         int getEventCount() const { return m_eventcount; }
         bool addEvent(int cfd, struct sockaddr_in* addr);
+        bool addfd(int cfd);
 
         void readEvent(struct bufferevent* bev);
         void writeEvent(struct bufferevent* bev);
